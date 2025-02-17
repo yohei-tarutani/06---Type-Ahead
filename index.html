@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Type Ahead 👀</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="https://fav.farm/🔥" />
+  </head>
+  <body>
+    <form class="search-form">
+      <input type="text" class="search" placeholder="City or State" />
+      <ul class="suggestions">
+        <li>Filter for a city</li>
+        <li>or a state</li>
+      </ul>
+    </form>
+    <script>
+      const endpoint =
+        "https://gist.githubusercontent.com/Miserlou/c5cd8364bf9b2420bb29/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json";
+
+      const cities = [];
+      // const promise = fetch(endpoint);
+      // console.log(promise);
+
+      fetch(endpoint) // sends a request to get the city data returning a promise <value> = response {...}
+        .then((blob) => blob.json()) // blob.json() → converts the response to a JavaScript array of objects returning another promise
+        .then((data) => cities.push(...data)); // uses the spread operator to add all 1000 objects to the cities array.
+
+      // This function searches for cities & states that match the input text.
+      function findMatches(wordToMatch, cities) {
+        return cities.filter((place) => {
+          // need to figure out if the city or state matches what was searched.
+
+          const regex = new RegExp(wordToMatch, "gi");
+          // Creates a regular expression:
+          //  g → global: searches all matches, not just the first one.
+          //  i → case-insensitive: ignores uppercase/lowercase differences.
+          return place.city.match(regex) || place.state.match(regex);
+          // Checks if either the city or state contains the input text.
+          // Returns only the matching objects into a new array.
+        });
+      }
+
+      // Formats numbers like population by adding commas for readability.
+      function numberWithCommas(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        // \B → matches non-word boundaries (to avoid adding commas at the start).
+        // (?=(\d{3})+(?!\d)) → finds groups of 3 digits (e.g., 1,000).
+      }
+
+      // Runs whenever the input field changes or the user presses a key.
+      function displayMatches() {
+        // console.log(this.value);  // <input> element
+        const matchArray = findMatches(this.value, cities);
+        console.log(matchArray); // ex. this.value = "bos" ==> Array [{city: "Boston", ...}, {city: "Bossier City", ...} ]
+        const html = matchArray
+          .map((place) => {
+            const regex = new RegExp(this.value, "gi");
+            // Creates a regular expression:
+            //  g → global: searches all matches, not just the first one.
+            //  i → case-insensitive: ignores uppercase/lowercase differences.
+
+            // Replaces matched text in the city and state names with highlighted text. Wraps the matched characters in a <span> with the class "hl" for styling.
+            const cityName = place.city.replace(
+              regex,
+              `<span class="hl">${this.value}</span>`
+            );
+            const stateName = place.state.replace(
+              regex,
+              `<span class="hl">${this.value}</span>`
+            );
+
+            // Generates an <li> element for each matched place.
+            return `
+                  <li>
+                    <span class="name">${cityName}, ${stateName}</span>
+                    <span class="population">${numberWithCommas(
+                      place.population
+                    )}</span>
+                  </li>
+                `;
+          })
+          .join("");
+        // Joins the array of HTML strings into a single string (instead of being separated by commas) => <li>...</li><li>...</li><li>...</li>
+        suggestions.innerHTML = html;
+        // Inserts the generated HTML into the <ul> with the class suggestions.
+      }
+
+      const searchInput = document.querySelector(".search");
+      const suggestions = document.querySelector(".suggestions");
+
+      searchInput.addEventListener("change", displayMatches);
+      searchInput.addEventListener("keyup", displayMatches);
+    </script>
+  </body>
+</html>
